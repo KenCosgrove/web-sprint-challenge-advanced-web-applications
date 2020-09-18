@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { axiosWithAuth } from '../utils/axiosWithAuth'
+import AddColor from "./AddColor";
 
 const initialColor = {
   color: "",
@@ -7,9 +8,9 @@ const initialColor = {
 };
 
 const ColorList = ({ colors, updateColors }) => {
-  console.log(colors);
   const [editing, setEditing] = useState(false);
   const [colorToEdit, setColorToEdit] = useState(initialColor);
+
 
   const editColor = color => {
     setEditing(true);
@@ -17,7 +18,21 @@ const ColorList = ({ colors, updateColors }) => {
   };
 
   const saveEdit = e => {
-    e.preventDefault();
+   /*  e.preventDefault(); */
+    
+    let newColors = colors;
+    axiosWithAuth()
+      .put(`/colors/${colorToEdit.id}`, colorToEdit)
+      .then((res) => {
+        newColors.map((color) => {
+          if (color.id === colorToEdit.id) {
+            color = res.data;
+          }
+          updateColors(newColors);
+          
+        });
+      })
+      .catch((err) => console.log(err));
     // Make a put request to save your updated color
     // think about where will you get the id from...
     // where is is saved right now?
@@ -25,6 +40,13 @@ const ColorList = ({ colors, updateColors }) => {
 
   const deleteColor = color => {
     // make a delete request to delete this color
+    axiosWithAuth()
+    .delete(`/colors/${color.id}`)
+    axiosWithAuth()
+      .get(`/colors`)
+      .then(res=> {
+        updateColors(res.data)
+      })
   };
 
   return (
@@ -33,7 +55,7 @@ const ColorList = ({ colors, updateColors }) => {
       <ul>
         {colors.map(color => (
           <li key={color.color} onClick={() => editColor(color)}>
-            <span>
+             <span data-testid='colors'>
               <span className="delete" onClick={e => {
                     e.stopPropagation();
                     deleteColor(color)
@@ -80,6 +102,7 @@ const ColorList = ({ colors, updateColors }) => {
           </div>
         </form>
       )}
+      <AddColor updateColors={updateColors} />
       <div className="spacer" />
       {/* stretch - build another form here to add a color */}
     </div>
